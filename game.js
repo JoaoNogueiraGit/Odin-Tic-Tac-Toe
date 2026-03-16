@@ -11,7 +11,7 @@ const Player = (name, marker) => {
 
 // Modulo para gerir o estado do tabuleiro
 const GameBoardController = (() => {
-    let gameboard = [" ", " ", " ", " ", " ", " ", " ", " ", " "];
+    let gameboard = ["", "", "", "", "", "", "", "", ""];
 
     const setField = (index, marker) => {
         if(index > gameboard.length) return;
@@ -25,7 +25,7 @@ const GameBoardController = (() => {
 
     const reset = () => {
         for(let i = 0; i < gameboard.length; i++){
-            gameboard[i] = " ";
+            gameboard[i] = "";
         }
     }
 
@@ -60,7 +60,7 @@ const gameController = (() => {
     const PlayRound = (index) => {
         if(!gameStarted) return;
 
-        if(GameBoardController.getField(index) !== " "){
+        if(GameBoardController.getField(index) !== ""){
             return "You cannot play there 😠!";
             return;
         }
@@ -69,10 +69,12 @@ const gameController = (() => {
 
         const winner = CheckWin()
         if(winner){
+            gameStarted = false;
             return `The winner is ${activePlayer.getName()}!`;
         }
 
         if(isBoardFull()){
+            gameStarted = false;
             return "It's a Tie!";
         }
 
@@ -99,15 +101,25 @@ const gameController = (() => {
         return null;
     };
 
+    const iswinner = () => {
+        const w = CheckWin()
+        if(w !== null){
+            gameStarted = false;
+            return true;
+        }
+
+        return false;
+    }
+
     const isBoardFull = () => {
         for(let i = 0; i < 9; i++){
-            if(GameBoardController.getField(i) === " ")
+            if(GameBoardController.getField(i) === "")
                 return false
         }
         return true;
     };
 
-    return { startGame, getGameStarted, PlayRound, getActivePlayer: () => activePlayer };
+    return { startGame, getGameStarted, PlayRound, getActivePlayer: () => activePlayer, iswinner };
 })();
 
 
@@ -145,13 +157,18 @@ const DOMController = (() => {
     const initEventListeners = () => {
         fields.forEach((btn) => {
             btn.addEventListener("click", (e) => {
-                if(gameController.getGameStarted){
+                if(gameController.getGameStarted()){
                     const index = e.target.dataset.index;
                     const statusMessage = gameController.PlayRound(index);
                     updateScreen(statusMessage);
                 }
                 else {
-                    result.textContent = "Start the game first"
+                    if (gameController.iswinner()) {
+                        result.textContent = "The game is over! Reset to play again.";
+                    } 
+                    else {
+                        result.textContent = "Start the game first!";
+                    }
                 }
             });
         });
@@ -160,7 +177,7 @@ const DOMController = (() => {
     const resetBoard = () => {
         resetBtn.addEventListener("click", () => {
                 fields.forEach((btn) => {
-                btn.textContent = " ";
+                btn.textContent = "";
                 GameBoardController.reset();
             });
         });
@@ -173,32 +190,3 @@ const DOMController = (() => {
     return { resetBoard, updateScreen };
 })();
 
-// Funções para testes da logica do jogo
-// const testGame = (moves) => {
-//     console.log("--- Iniciando Teste de Jogo ---");
-//     GameBoardController.reset(); // Limpa o tabuleiro antes de começar
-
-//     moves.forEach((moveIndex, i) => {
-//         const currentPlayer = gameController.getActivePlayer().getName();
-//         console.log(`Ronda ${i + 1}: ${currentPlayer} joga na posição ${moveIndex}`);
-        
-//         gameController.PlayRound(moveIndex);
-        
-//         // Vamos imprimir o tabuleiro de forma visual na consola
-//         renderConsoleBoard(); 
-//     });
-// };
-
-// // Função auxiliar para veres o tabuleiro na consola
-// const renderConsoleBoard = () => {
-//     const b = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => GameBoardController.getField(i));
-//     console.log(`
-//       ${b[0]} | ${b[1]} | ${b[2]}
-//      -----------
-//       ${b[3]} | ${b[4]} | ${b[5]}
-//      -----------
-//       ${b[6]} | ${b[7]} | ${b[8]}
-//     `);
-// };
-
-// testGame([0, 0])
