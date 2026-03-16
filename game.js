@@ -3,15 +3,11 @@
 const Player = (name, marker) => {
 
     const getName = () => name;
-    const getMarker = () => marker;
-    const setName = (_name) => {name = _name}
-    const setMarker = (_marker) => {marker = _marker} 
+    const getMarker = () => marker; 
 
-    return {getName, getMarker};
+    return { getName, getMarker };
 };
 
-const p1 = Player("Joao", "X");
-const p2 = Player("Oaoj", "O");
 
 // Modulo para gerir o estado do tabuleiro
 const GameBoardController = (() => {
@@ -40,15 +36,32 @@ const GameBoardController = (() => {
 // Modulo para gerir ações do jogo
 const gameController = (() => {
 
-    let activePlayer = p1;
+    let activePlayer;
+    let p1, p2;
+    let gameStarted = false;
 
     const changePlayer = () => {
         activePlayer = activePlayer === p1 ? p2 : p1;
-    }
+    };
+
+    const startGame = (name1, name2) => {
+        if(name1 === "" || name2 === "") return false;
+
+        p1 = Player(name1, "X");
+        p2 = Player(name2, "O");
+        activePlayer = p1;
+        gameStarted = true;
+
+        return true;
+    };
+
+    const getGameStarted = () => gameStarted
 
     const PlayRound = (index) => {
+        if(!gameStarted) return;
+
         if(GameBoardController.getField(index) !== " "){
-            console.log("ERRO: Não pode jogar num espaço que já esteja ocupado!");
+            return "You cannot play there 😠!";
             return;
         }
 
@@ -56,14 +69,15 @@ const gameController = (() => {
 
         const winner = CheckWin()
         if(winner){
-            console.log(`O vencedor é {activePlayer.getName()}!`);
+            return `The winner is ${activePlayer.getName()}!`;
         }
 
         if(isBoardFull()){
-            console.log("Empate!");
+            return "It's a Tie!";
         }
 
         changePlayer();
+        return `It's ${activePlayer.getName()}'s (${activePlayer.getMarker()}) turn`;
     };
 
     const CheckWin = () => {
@@ -83,7 +97,7 @@ const gameController = (() => {
         }
 
         return null;
-    }
+    };
 
     const isBoardFull = () => {
         for(let i = 0; i < 9; i++){
@@ -91,31 +105,54 @@ const gameController = (() => {
                 return false
         }
         return true;
-    }
+    };
 
-    return { PlayRound, getActivePlayer: () => activePlayer }
+    return { startGame, getGameStarted, PlayRound, getActivePlayer: () => activePlayer };
 })();
+
+
 
 // modulo para gerir as alteraões na interface do utilizador
 const DOMController = (() => {
     const fields = document.querySelectorAll(".fieldBtn");
     const resetBtn = document.querySelector("#resetBtn");
+    const startBtn = document.querySelector("#startbtn");
     const p1Name = document.querySelector("#p1name");
     const p2Name = document.querySelector("#p2name");
     const result = document.querySelector("#result");
 
-    const drawMarker = () => {
+   const init = () => {
+        startBtn.addEventListener("click", () => {
+            const sucess = gameController.startGame(p1Name.value, p2Name.value);
+            if(sucess) {
+                result.textContent = "Game started"
+            }
+            else {
+                result.textContent = "Enter names for both players!"
+            }
+        });
+   }
+
+    const updateScreen = (message) => {
         fields.forEach((btn, index) => {
             btn.textContent = GameBoardController.getField(index);
         });
+        if(message){
+            result.textContent = message;
+        }
     };
 
     const initEventListeners = () => {
         fields.forEach((btn) => {
             btn.addEventListener("click", (e) => {
-                const index = e.target.dataset.index;
-                gameController.PlayRound(index);
-                drawMarker();
+                if(gameController.getGameStarted){
+                    const index = e.target.dataset.index;
+                    const statusMessage = gameController.PlayRound(index);
+                    updateScreen(statusMessage);
+                }
+                else {
+                    result.textContent = "Start the game first"
+                }
             });
         });
     };
@@ -127,13 +164,13 @@ const DOMController = (() => {
                 GameBoardController.reset();
             });
         });
-    }
+    };
 
-
+    init();
     initEventListeners();
     resetBoard();
 
-    return { resetBoard, drawMarker}
+    return { resetBoard, updateScreen };
 })();
 
 // Funções para testes da logica do jogo

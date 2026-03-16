@@ -48,17 +48,17 @@ body{
     border-radius: 6px;
 }
 
-#resetBtn{
+#resetBtn, #startbtn{
     border-radius: 6px;
     border: solid black 2px;
     color: white;
     background-color: rgb(134, 9, 9);
-    height: 45px;
+    height: 30px;
     width: 100px;
     font-weight: 900;
 }
 
-#resetBtn:hover{
+#resetBtn:hover, #startbtn:hover{
     cursor: pointer;
     background-color: rgba(134, 9, 9, 0.9);
 }
